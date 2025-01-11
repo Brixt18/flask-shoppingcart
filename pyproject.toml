@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Flask-ShoppingCart"
+version = "1.0.0"
+description = "Add a shopping cart to your Flask app"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+maintainers = [{name = "Brixt18"},]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Typing :: Typed",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=2.2.5",
+]

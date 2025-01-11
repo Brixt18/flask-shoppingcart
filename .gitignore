@@ -1,0 +1,7 @@
+.*
+!.gitignore
+venv*/
+__pycache__/
+dist/
+htmlcov/
+docs/_build/
