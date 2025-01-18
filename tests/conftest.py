@@ -2,20 +2,20 @@ import pytest
 from flask import Flask
 from src.flask_shoppingcart import ShoppingCart
 
-@pytest.fixture(scope='class')
+@pytest.fixture
 def app():
     app = Flask(__name__)
+    app.config["SECRET_KEY"] = "1234"
     app.config['TESTING'] = True
     app.config['SHOPPING_CART_COOKIE_NAME'] = 'test_cart'
 
-    yield app
+    return app
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture
 def client(app: Flask):
-    with app.test_client() as client:
-        yield client
+    return app.test_client()
 
-@pytest.fixture(scope='class')
+@pytest.fixture
 def cart(app: Flask):
-    yield ShoppingCart(app)
+    return ShoppingCart(app)

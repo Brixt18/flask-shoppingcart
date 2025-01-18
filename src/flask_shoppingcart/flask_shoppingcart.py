@@ -1,28 +1,22 @@
-from flask import make_response, Response, request, Flask
-import json
-import logging
-from typing import Any
-from numbers import Number
 from functools import partial
-from .exceptions import OutOfStokError
+from numbers import Number
+from typing import Any
+
+import json
+from .exceptions import OutOfStokError, ProductNotFoundError
+from .shoppingcart import ShoppingCartBase
 
 
-class ShoppingCart:
-	def __init__(self, app: Flask=None) -> None:
-		if app is not None:
-			self.init_app(app)
+class ShoppingCart(ShoppingCartBase):
+	@property
+	def cart(self) -> dict:
+		"""
+		Get the cart data.
 		
-	def init_app(self, app: Flask) -> None:
-		self.app = app
-		
-		with self.app.app_context():
-			self.response: Response = make_response({}, 204)
-
-		self._init_config()
-	
-	def _init_config(self) -> None:
-		self.cookie_name: str = self.app.config.get("SHOPPING_CART_COOKIE_NAME", "products")
-		self.allow_negative_quantity: bool = bool(self.app.config.get("FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY", 0))
+		Returns:
+			dict: The cart data.
+		"""
+		return self.get_cart()
 
 	def _validate_stock(self, current_stock: Number, quantity_to_add: Number, current_quantity: Number) -> None:
 		"""
@@ -37,164 +31,124 @@ class ShoppingCart:
 		Raises:
 			OutOfStockError: If the total quantity exceeds the current stock.
 		"""
-		logging.info("Validating stock")
-
 		if (
 			(current_stock is not None)
 			and ((current_quantity + quantity_to_add) > current_stock)
 		):
 			raise OutOfStokError()
 
-	def get_cart(self) -> dict[Any, dict]:
+	def get_cart(self) -> dict:
 		"""
-		Retrieve the shopping cart from cookies.
-		This method attempts to load the shopping cart data stored in cookies.
-		If the cookie with the specified name exists, it will parse the JSON data
-		and return it as a dictionary. If the cookie does not exist, it will return
-		an empty dictionary.
+		Get the cart data.
 		
 		Returns:
-			dict[Any, dict]: The shopping cart data as a dictionary. If the cookie
-			does not exist, an empty dictionary is returned.
+			dict: The cart data.
 		"""
-		logging.info("Getting cart from cookies")
-
-		cart = (
-			json.loads(request.cookies.get(self.cookie_name)) 
-			if self.cookie_name in request.cookies 
-			else dict()
-		)
-		logging.debug(f"{cart=}")
-
-		return cart
+		return self._get_cart()
 
 	def add(self,
-		 product_id: str,
-		 quantity: Number=1,
-		 overwrite_quantity: bool = False,
-		 current_stock: Number | None = None,
-		 extra: dict | None = None,
-		 allow_negative: bool = None
-	) -> Response:
+         product_id: str,
+         quantity: Number = 1,
+         overwrite_quantity: bool = False,
+         current_stock: Number | None = None,
+         extra: dict | None = None,
+         allow_negative: bool = None
+         ) -> None:
 		"""
 		Add a product to the cart or update the quantity of an existing product.
 		
 		Args:
-			product_id (Any): The ID of the product to add.
+			product_id (str): The ID of the product to add.
 			quantity (Number): The quantity of the product to add.
 			overwrite_quantity (bool): If True, the quantity will be overwritten instead of added.
 			current_stock (Number, optional): The current stock of the product. If set, the stock will be validated.
 			extra (dict, optional): Extra data to store in the product.
 			allow_negative (bool, optional): If True, the quantity can be negative.
-		
-		Returns:
-			Response: The response after adding the product to the cart.
 
 		Raises:
 			OutOfStokError: If the product is out of stock. This error is raise if the ignore_stock is True and the quantity exceeds the current stock.
 		"""
-		logging.info(f"Adding product to cart")
+		cart: dict[Any, dict] = self._get_cart()
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
-		logging.debug(f"Allow negative quantity flag set to: {_allow_negative}")
 
 		if not _allow_negative and quantity <= 0:
 			raise ValueError("Quantity must be greater than 0.")
-		
-		# Get the products in the cart
-		cart: dict[Any, dict] = self.get_cart()
-		logging.debug(f"{cart=}")
 
 		product: dict = cart.get(product_id, {})
-		logging.debug(f"{product=}")
 
 		_data = {
 			"quantity": quantity,
 		}
 
-		_validate_stock: partial = partial(self._validate_stock, current_stock, quantity)
+		_validate_stock: partial = partial(
+			self._validate_stock, current_stock, quantity)
 
 		if product:
-			logging.debug("Product already in cart")
 			_validate_stock(product["quantity"])
 
 			if overwrite_quantity:
-				logging.debug("Overwriting product quantity")
 				product.update(_data)
 
 			else:
-				logging.debug("Adding quantity to product")
 				product["quantity"] += quantity
-					
+
 		else:
-			logging.debug("Product not in cart")
 			product = _data
 			_validate_stock(0)
 
 		if extra:
-			product.update(extra)
+			if not isinstance(extra, dict):
+				raise TypeError("Extra data must be a dictionary.")
+			
+			if product.get("extra"):
+				product["extra"].update(extra)
+			
+			else:
+				product["extra"] = extra
 
 		cart[product_id] = product
 
-		self.response.set_cookie(self.cookie_name, json.dumps(cart))
-		return self.response
-	
-	def remove(self, product_id: str) -> Response:
+		self._set_cart(cart)
+
+	def remove(self, product_id: str) -> None:
 		"""
 		Removes a product from the cart.
 		
 		Args:
-			product_id (Any): The ID of the product to remove.
-		
-		Returns:
-			Response: The response after removing the product from the cart.
+			product_id (str): The ID of the product to remove.
 		"""
-		logging.info("Removing product from cart")
-		cart: dict[Any, dict] = self.get_cart()
-		
+		cart: dict[Any, dict] = self._get_cart()
+
 		if product_id in cart:
 			cart.pop(product_id)
-			self.response.set_cookie(self.cookie_name, json.dumps(cart))
-		
-		return self.response
+			self._set_cart(cart)
 
-	def clear(self) -> Response:
+	def clear(self) -> None:
 		"""
 		Clears the cart.
-		
-		Returns:
-			Response: The response after clearing the cart.
 		"""
-		logging.info("Clearing cart")
-		self.response.set_cookie(self.cookie_name, json.dumps({}))
+		self._set_cart(dict())
 
-		return self.response
-	
-	def subtract(self, product_id: str, quantity: Number=1, allow_negative: bool = False) -> Response:
+	def subtract(self, product_id: str, quantity: Number = 1, allow_negative: bool = False) -> None:
 		"""
 		Substracts a quantity from a product in the cart.
 		
 		Args:
-			product_id (Any): The ID of the product to substract from.
+			product_id (str): The ID of the product to substract from.
 			quantity (Number): The quantity to substract.
 			allow_negative (bool): If True, the quantity can be negative.
-		
-		Returns:
-			Response: The response after substracting the quantity from the product.
 		"""
-		logging.info("Substracting quantity from product in cart")
+		cart: dict[Any, dict] = self._get_cart()
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
-		logging.debug(f"Allow negative quantity flag set to: {_allow_negative}")
-
-		cart: dict[Any, dict] = self.get_cart()
 
 		if product_id in cart:
 			product: dict = cart[product_id]
 			product["quantity"] -= quantity
 
 			if (
-				not _allow_negative 
+				not _allow_negative
 				and product["quantity"] <= 0
 			):
 				raise ValueError(
@@ -202,7 +156,37 @@ class ShoppingCart:
 					"To allow negative quantity, set the allow_negative flag to True. "
 					"0 values are not allowed, use the remove method instead."
 				)
-			
-			self.response.set_cookie(self.cookie_name, json.dumps(cart))
+
+			self._set_cart(cart)
+
+	def get_product(self, product_id: str) -> dict:
+		"""
+		Retrieve a product from the shopping cart by its product ID.
 		
-		return self.response
+		Args:
+			product_id (str): The unique identifier of the product to retrieve.
+		
+		Returns:
+			dict: A dictionary containing the product details.
+		
+		Raises:
+			ProductNotFoundError: If the product with the given ID is not found in the cart.
+		"""
+		product: dict | None = self._get_cart().get(product_id, None)
+
+		if product is None:
+			raise ProductNotFoundError()
+		
+		return product
+
+	def get_product_or_none(self, product_id: str) -> dict | None:
+		"""
+		Get a product from the cart.
+		
+		Args:
+			product_id (str): The ID of the product to get.
+		
+		Returns:
+			dict: The product data.
+		"""
+		return self._get_cart().get(product_id, None)
