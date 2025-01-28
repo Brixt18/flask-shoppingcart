@@ -2,7 +2,6 @@ from functools import partial
 from numbers import Number
 from typing import Any
 
-import json
 from .exceptions import OutOfStokError, ProductNotFoundError
 from .shoppingcart import ShoppingCartBase
 

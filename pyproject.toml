@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Flask-ShoppingCart"
-version = "0.1.0"
+name = "flask_shoppingcart"
+version = "0.1.7"
 description = "Add a shopping cart to your Flask app"
 readme = "README.md"
 license = { file = "LICENSE.txt" }

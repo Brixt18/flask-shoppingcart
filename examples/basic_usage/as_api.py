@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 
-from src.flask_shoppingcart import ShoppingCart
+from src.flask_shoppingcart.flask_shoppingcart import ShoppingCart
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'

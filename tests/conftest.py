@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask
-from src.flask_shoppingcart import ShoppingCart
+from src.flask_shoppingcart.flask_shoppingcart import ShoppingCart
 
 @pytest.fixture
 def app():

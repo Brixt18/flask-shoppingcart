@@ -2,7 +2,7 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
-from src.flask_shoppingcart import OutOfStokError, ShoppingCart, ProductNotFoundError
+from src.flask_shoppingcart.flask_shoppingcart import OutOfStokError, ShoppingCart, ProductNotFoundError
 
 class TestShoppingCart:
 	def test_get_cart_empty(self, cart: ShoppingCart, app: Flask):
