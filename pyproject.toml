@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flask_shoppingcart"
-version = "0.1.7"
+version = "0.1.12"
 description = "Add a shopping cart to your Flask app"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
@@ -19,7 +19,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Typing :: Typed",
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.7.17"
 dependencies = [
     "flask>=2.2.5",
 ]

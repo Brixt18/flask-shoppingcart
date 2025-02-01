@@ -1,12 +1,12 @@
 from functools import partial
 from numbers import Number
-from typing import Any
+from typing import Any, Optional, Union
 
 from .exceptions import OutOfStokError, ProductNotFoundError
 from .shoppingcart import ShoppingCartBase
 
 
-class ShoppingCart(ShoppingCartBase):
+class FlaskShoppingCart(ShoppingCartBase):
 	@property
 	def cart(self) -> dict:
 		"""
@@ -49,9 +49,9 @@ class ShoppingCart(ShoppingCartBase):
          product_id: str,
          quantity: Number = 1,
          overwrite_quantity: bool = False,
-         current_stock: Number | None = None,
-         extra: dict | None = None,
-         allow_negative: bool = None
+         current_stock: Optional[Number] = None,
+         extra: Optional[dict] = None,
+         allow_negative: Optional[bool] = None
          ) -> None:
 		"""
 		Add a product to the cart or update the quantity of an existing product.
@@ -171,14 +171,14 @@ class ShoppingCart(ShoppingCartBase):
 		Raises:
 			ProductNotFoundError: If the product with the given ID is not found in the cart.
 		"""
-		product: dict | None = self._get_cart().get(product_id, None)
+		product: Union[dict, None] = self._get_cart().get(product_id, None)
 
 		if product is None:
 			raise ProductNotFoundError()
 		
 		return product
 
-	def get_product_or_none(self, product_id: str) -> dict | None:
+	def get_product_or_none(self, product_id: str) -> Union[dict, None]:
 		"""
 		Get a product from the cart.
 		

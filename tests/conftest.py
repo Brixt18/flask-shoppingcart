@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask
-from src.flask_shoppingcart.flask_shoppingcart import ShoppingCart
+from src.flask_shoppingcart.flask_shoppingcart import FlaskShoppingCart
 
 @pytest.fixture
 def app():
@@ -18,4 +18,4 @@ def client(app: Flask):
 
 @pytest.fixture
 def cart(app: Flask):
-    return ShoppingCart(app)
+    return FlaskShoppingCart(app)
