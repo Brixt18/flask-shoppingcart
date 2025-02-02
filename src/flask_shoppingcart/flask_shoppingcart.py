@@ -3,7 +3,7 @@ from numbers import Number
 from typing import Any, Optional, Union
 
 from .exceptions import OutOfStokError, ProductNotFoundError
-from .shoppingcart import ShoppingCartBase
+from ._shoppingcart import ShoppingCartBase
 
 
 class FlaskShoppingCart(ShoppingCartBase):

@@ -53,9 +53,3 @@ class ShoppingCartBase:
 
 	def _get_cookie_cart(self) -> str:
 		return request.cookies.get(self.cookie_name, str(dict()))
-
-	def _update_cart_from_cookie(self) -> None:
-		"""
-		Update the cart data from the cookie.
-		"""
-		self._set_cart(json.loads(self._get_cookie_cart()))

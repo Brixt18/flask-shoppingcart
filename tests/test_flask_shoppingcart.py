@@ -1,14 +1,16 @@
 import pytest
 from flask import Flask
-from flask.testing import FlaskClient
 
 from src.flask_shoppingcart.flask_shoppingcart import OutOfStokError, FlaskShoppingCart, ProductNotFoundError
 
 class TestShoppingCart:
-	def test_get_cart_empty(self, cart: FlaskShoppingCart, app: Flask):
+	def test_get_cart_empty_success(self, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
 			cart_data = cart.get_cart()
+			cart_data_as_property = cart.cart
+
 			assert cart_data == {}
+			assert cart_data_as_property == {}
 
 	def test_add_product_success(self, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
@@ -45,7 +47,7 @@ class TestShoppingCart:
 			assert 'product_1' in cart_data
 			assert cart_data['product_1']['quantity'] == -2
 
-	def test_add_product_with_extra_data(self, cart: FlaskShoppingCart, app: Flask):
+	def test_add_product_with_extra_data_success(self, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
 			cart.clear()
 			cart.add('product_1', 2, extra={'color': 'red'})
@@ -57,6 +59,12 @@ class TestShoppingCart:
 			assert 'color' in cart_data['product_1']["extra"]
 			assert 'size' in cart_data['product_1']["extra"]
 			assert cart_data["product_1"]["quantity"] == 6
+
+	def test_add_product_with_extra_data_is_not_dict_fail(self, cart: FlaskShoppingCart, app: Flask):
+		with app.test_request_context():
+			with pytest.raises(TypeError):
+				cart.add('product_1', 2, extra='color:red')
+
 
 	def test_remove_product_success(self, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
@@ -107,4 +115,7 @@ class TestShoppingCart:
 			with pytest.raises(ProductNotFoundError):
 				cart.get_product('product_1')
 	
-
+	def test_get_product_or_none_success(self, cart: FlaskShoppingCart, app: Flask):
+		with app.test_request_context():
+			cart.clear()
+			assert cart.get_product_or_none('product_1') is None
