@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flask_shoppingcart"
-version = "0.1.12"
+version = "0.1.13"
 description = "Add a shopping cart to your Flask app"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
