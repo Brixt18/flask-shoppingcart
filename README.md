@@ -84,4 +84,4 @@ def my_route():
 
     return jsonify(shopping_cart.cart)
 ```
-In order to work with the application's cookies, `FlaskShoppingCart` add an [`after_request`](https://flask.palletsprojects.com/en/stable/api/#flask.Flask.after_request) to the application to apply the modified and/or created cookie to manage the cart, otherwise the extension would not be able to manage the products in the user's cart. Although this might be frustrating if you want to share the cart along other user devices, you could overwrite the private method `FlaskShoppingCart._get_cart` to manage the user's cart from your own database.
+In order to work with the application's cookies, `FlaskShoppingCart` adds an [`after_request`](https://flask.palletsprojects.com/en/stable/api/#flask.Flask.after_request) to the application to apply the modified and/or created cookie to manage the cart, otherwise the extension would not be able to manage the products in the user's cart.
