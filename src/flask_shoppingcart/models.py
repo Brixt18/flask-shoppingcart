@@ -4,6 +4,3 @@ from typing import TypedDict, NotRequired
 class CartItem(TypedDict):
     quantity: Number
     extra: NotRequired[dict]
-
-
-    

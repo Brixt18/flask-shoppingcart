@@ -33,8 +33,7 @@ class ShoppingCartBase:
 			response (Response): The response object to set the cookie in.
 		"""
 		if not session.get(self.cookie_name):
-			empty_cart: dict[str, CartItem] = {}
-			self._set_cart(empty_cart)
+			self._set_cart({})
 
 		response.set_cookie(self.cookie_name, json.dumps(self._get_cart()))
 
