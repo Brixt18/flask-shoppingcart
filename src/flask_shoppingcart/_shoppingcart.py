@@ -2,7 +2,7 @@ import json
 
 from flask import Flask, Response, session, request
 
-from flask_shoppingcart.models import CartItem
+from .models import CartItem
 
 from typing import Optional
 
