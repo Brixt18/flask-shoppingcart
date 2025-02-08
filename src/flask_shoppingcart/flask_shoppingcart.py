@@ -1,14 +1,15 @@
 from functools import partial
 from numbers import Number
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 from .exceptions import OutOfStokError, ProductNotFoundError
+from .models import CartItem
 from ._shoppingcart import ShoppingCartBase
 
 
 class FlaskShoppingCart(ShoppingCartBase):
 	@property
-	def cart(self) -> dict:
+	def cart(self) -> dict[str, CartItem]:
 		"""
 		Get the cart data.
 		
@@ -17,7 +18,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		"""
 		return self.get_cart()
 
-	def _validate_stock(self, current_stock: Number, quantity_to_add: Number, current_quantity: Number) -> None:
+	def _validate_stock(self, current_stock: Optional[Number], quantity_to_add: Number, current_quantity: Number) -> None:
 		"""
 		Validates if the stock is sufficient for the quantity to be added.
 		
@@ -36,7 +37,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		):
 			raise OutOfStokError()
 
-	def get_cart(self) -> dict:
+	def get_cart(self) -> dict[str, CartItem]:
 		"""
 		Get the cart data.
 		
@@ -67,16 +68,16 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Raises:
 			OutOfStokError: If the product is out of stock. This error is raise if the ignore_stock is True and the quantity exceeds the current stock.
 		"""
-		cart: dict[Any, dict] = self._get_cart()
+		cart: dict[str, CartItem] = self._get_cart()
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
 
 		if not _allow_negative and quantity <= 0:
 			raise ValueError("Quantity must be greater than 0.")
 
-		product: dict = cart.get(product_id, {})
+		product: Optional[CartItem] = cart.get(product_id, None)
 
-		_data = {
+		_data:CartItem = {
 			"quantity": quantity,
 		}
 
@@ -117,7 +118,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Args:
 			product_id (str): The ID of the product to remove.
 		"""
-		cart: dict[Any, dict] = self._get_cart()
+		cart = self._get_cart()
 
 		if product_id in cart:
 			cart.pop(product_id)
@@ -138,12 +139,12 @@ class FlaskShoppingCart(ShoppingCartBase):
 			quantity (Number): The quantity to substract.
 			allow_negative (bool): If True, the quantity can be negative.
 		"""
-		cart: dict[Any, dict] = self._get_cart()
+		cart = self._get_cart()
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
 
 		if product_id in cart:
-			product: dict = cart[product_id]
+			product = cart[product_id]			
 			product["quantity"] -= quantity
 
 			if (
@@ -158,7 +159,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 			self._set_cart(cart)
 
-	def get_product(self, product_id: str) -> dict:
+	def get_product(self, product_id: str) -> CartItem:
 		"""
 		Retrieve a product from the shopping cart by its product ID.
 		
@@ -171,14 +172,14 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Raises:
 			ProductNotFoundError: If the product with the given ID is not found in the cart.
 		"""
-		product: Union[dict, None] = self._get_cart().get(product_id, None)
+		product = self._get_cart().get(product_id, None)
 
 		if product is None:
 			raise ProductNotFoundError()
 		
 		return product
 
-	def get_product_or_none(self, product_id: str) -> Union[dict, None]:
+	def get_product_or_none(self, product_id: str) -> Union[CartItem, None]:
 		"""
 		Get a product from the cart.
 		

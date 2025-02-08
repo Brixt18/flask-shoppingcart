@@ -2,12 +2,16 @@ import json
 
 from flask import Flask, Response, session, request
 
+from .models import CartItem
+
+from typing import Optional
+
 from .config import (FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY,
                      SHOPPING_CART_COOKIE_NAME)
 
 
 class ShoppingCartBase:
-	def __init__(self, app: Flask = None) -> None:
+	def __init__(self, app: Optional[Flask] = None) -> None:
 		if app is not None:
 			self.init_app(app)
 
@@ -29,11 +33,11 @@ class ShoppingCartBase:
 			response (Response): The response object to set the cookie in.
 		"""
 		if not session.get(self.cookie_name):
-			self._set_cart(dict())
+			self._set_cart({})
 
 		response.set_cookie(self.cookie_name, json.dumps(self._get_cart()))
 
-	def _get_cart(self) -> dict:
+	def _get_cart(self) -> dict[str, CartItem]:
 		"""
 		Get the cart data.
 		
@@ -42,7 +46,7 @@ class ShoppingCartBase:
 		"""
 		return session.get(self.cookie_name, dict())
 
-	def _set_cart(self, cart: dict) -> None:
+	def _set_cart(self, cart: dict[str, CartItem]) -> None:
 		"""
 		Set the cart data.
 		
