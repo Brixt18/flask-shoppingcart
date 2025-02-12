@@ -138,6 +138,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 			product_id (str): The ID of the product to substract from.
 			quantity (Number): The quantity to substract.
 			allow_negative (bool): If True, the quantity can be negative.
+			autoremove_if_0 (bool): If True, the product will be removed if the quantity reaches 0 or less. This flag is only valid if allow_negative is False.
 		"""
 		cart = self._get_cart()
 
