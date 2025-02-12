@@ -2,7 +2,7 @@ from decimal import Decimal
 import pytest
 from flask import Flask
 
-from src.flask_shoppingcart.flask_shoppingcart import OutOfStokError, FlaskShoppingCart, ProductNotFoundError
+from src.flask_shoppingcart.flask_shoppingcart import OutOfStokError, FlaskShoppingCart, ProductNotFoundError, QuantityError
 
 class TestShoppingCart:
 	def test_get_cart_empty_success(self, cart: FlaskShoppingCart, app: Flask):
@@ -97,15 +97,33 @@ class TestShoppingCart:
 		with app.test_request_context():
 			cart.clear()
 			cart.add('product_1', 5)
-			cart.subtract('product_1', 10, allow_negative=True)
+			cart.subtract('product_1', 10, allow_negative=True, autoremove_if_0=False)
 
 			assert cart.get_cart()['product_1']['quantity'] == -5
 
 	def test_subtract_product_out_of_stock_fail(self, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
 			cart.add('product_1', 2)
+			with pytest.raises(QuantityError):
+				cart.subtract('product_1', 3, autoremove_if_0=False)
+
+	def test_subtract_product_autoremove_if_0_success(self, cart: FlaskShoppingCart, app: Flask):
+		with app.test_request_context():
+			cart.add('product_1', 2)
+			cart.subtract('product_1', 2, autoremove_if_0=True)
+
+			assert 'product_1' not in cart.get_cart()
+
+	def test_subtract_product_not_found_fail(self, cart: FlaskShoppingCart, app: Flask):
+		with app.test_request_context():
+			with pytest.raises(ProductNotFoundError):
+				cart.subtract('product_1')
+
+	def test_subtract_product_allow_negative_and_autoremove_if_0_fail(self, cart: FlaskShoppingCart, app: Flask):
+		with app.test_request_context():
+			cart.add('product_1', 2)
 			with pytest.raises(ValueError):
-				cart.subtract('product_1', 3)
+				cart.subtract('product_1', 1, allow_negative=True, autoremove_if_0=True)
 
 	def test_get_product_success(self, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():

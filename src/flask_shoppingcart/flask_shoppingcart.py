@@ -2,7 +2,7 @@ from functools import partial
 from numbers import Number
 from typing import Optional, Union
 
-from .exceptions import OutOfStokError, ProductNotFoundError
+from .exceptions import OutOfStokError, ProductNotFoundError, QuantityError
 from .models import CartItem
 from ._shoppingcart import ShoppingCartBase
 
@@ -130,7 +130,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		"""
 		self._set_cart(dict())
 
-	def subtract(self, product_id: str, quantity: Number = 1, allow_negative: bool = False) -> None:
+	def subtract(self, product_id: str, quantity: Number = 1, allow_negative: bool = False, autoremove_if_0: bool = True) -> None:
 		"""
 		Substracts a quantity from a product in the cart.
 		
@@ -143,19 +143,35 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
 
-		if product_id in cart:
+		if not product_id in cart:
+			raise ProductNotFoundError()
+
+		else:
 			product = cart[product_id]			
 			product["quantity"] -= quantity
 
+
 			if (
-				not _allow_negative
-				and product["quantity"] <= 0
+				_allow_negative
+				and autoremove_if_0
 			):
 				raise ValueError(
-					"Product quantity cannot be negative nor 0. "
-					"To allow negative quantity, set the allow_negative flag to True. "
-					"0 values are not allowed, use the remove method instead."
+					"The autoremove_if_0 flag cannot be set to True when allow_negative is True."
 				)
+
+			if (
+				not _allow_negative 
+				and product["quantity"] <= 0
+			):
+				if autoremove_if_0:
+					cart.pop(product_id)
+
+				else:
+					raise QuantityError(
+						"Product quantity cannot be negative or 0. "
+						"To allow negative quantities, set the allow_negative flag to True. "
+						"0 values are not allowed; use the remove method instead or set autoremove_if_0 to True."
+					)
 
 			self._set_cart(cart)
 
