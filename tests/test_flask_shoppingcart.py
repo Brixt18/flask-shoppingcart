@@ -1,3 +1,4 @@
+from decimal import Decimal
 import pytest
 from flask import Flask
 
@@ -12,21 +13,23 @@ class TestShoppingCart:
 			assert cart_data == {}
 			assert cart_data_as_property == {}
 
-	def test_add_product_success(self, cart: FlaskShoppingCart, app: Flask):
+	@pytest.mark.parametrize('quantity', [1, 1.0, Decimal('1.0')])
+	def test_add_product_success(self, quantity, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
-			cart.add('product_1', 2)
+			cart.add('product_1', quantity)
 			cart_data = cart.get_cart()
 
 			assert 'product_1' in cart_data
-			assert cart_data['product_1']['quantity'] == 2
+			assert cart_data['product_1']['quantity'] == quantity
 
-	def test_add_product_overwrite_quantity_success(self, cart: FlaskShoppingCart, app: Flask):
+	@pytest.mark.parametrize('quantity', [1, 1.0, Decimal('1.0')])
+	def test_add_product_overwrite_quantity_success(self, quantity, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
 			cart.add('product_1', 2)
-			cart.add('product_1', 5, overwrite_quantity=True)
+			cart.add('product_1', quantity, overwrite_quantity=True)
 
 			cart_data = cart.get_cart()
-			assert cart_data['product_1']['quantity'] == 5
+			assert cart_data['product_1']['quantity'] == quantity
 
 	def test_add_product_insufficient_stock_fail(self, cart: FlaskShoppingCart, app: Flask):
 		with app.test_request_context():
