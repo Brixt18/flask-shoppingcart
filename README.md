@@ -6,6 +6,7 @@ Install the extension with pip:
 ```shell
 $ pip install flask-shoppingcart 
 ```
+Find Flask-Shoppingcart at [PyPI](https://pypi.org/project/flask-shoppingcart/0.1.0/)
 
 ## A Basic Example
 Let's walk through setting up a basic application. Note that this is a very basic guide: we will be taking shortcuts here that you should never take in a real application.
