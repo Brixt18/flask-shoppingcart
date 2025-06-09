@@ -8,7 +8,9 @@ class TestShoppingCartBaseTestCase():
 		with app.test_request_context():
 			response = app.test_client().get('/')
 
-			assert 'test_cart' in response.headers.get('Set-Cookie')
+			print(response.headers.get('Set-Cookie', {}))
+
+			assert 'test_cart' in response.headers.get('Set-Cookie', {})
 
 	def test_get_cookie_cart(self, cart_base: ShoppingCartBase, app: Flask):
 		with app.test_request_context():

@@ -7,7 +7,7 @@ from .models import CartItem
 from typing import Optional
 
 from .config import (FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY,
-                     SHOPPING_CART_COOKIE_NAME)
+                     FLASK_SHOPPING_CART_COOKIE_NAME)
 
 
 class ShoppingCartBase:
@@ -17,7 +17,7 @@ class ShoppingCartBase:
 
 	def init_app(self, app: Flask) -> None:
 		app.after_request(self._after_request)
-		self.cookie_name: str = str(app.config.get("SHOPPING_CART_COOKIE_NAME", SHOPPING_CART_COOKIE_NAME))  # noqa
+		self.cookie_name: str = str(app.config.get("FLASK_SHOPPING_CART_COOKIE_NAME", FLASK_SHOPPING_CART_COOKIE_NAME))  # noqa
 		self.allow_negative_quantity: bool = bool(app.config.get("FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY", FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY))  # noqa
 
 	def _after_request(self, response: Response) -> Response:

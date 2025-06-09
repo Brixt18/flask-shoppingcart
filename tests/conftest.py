@@ -10,7 +10,7 @@ def app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "1234"
     app.config['TESTING'] = True
-    app.config['SHOPPING_CART_COOKIE_NAME'] = 'test_cart'
+    app.config['FLASK_SHOPPING_CART_COOKIE_NAME'] = 'test_cart'
 
     return app
 
