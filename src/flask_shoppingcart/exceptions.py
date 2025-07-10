@@ -4,5 +4,8 @@ class OutOfStokError(Exception):
 class ProductNotFoundError(Exception):
     pass
 
+class ProductExtraDataNotFoundError(Exception):
+    pass
+
 class QuantityError(Exception):
     pass

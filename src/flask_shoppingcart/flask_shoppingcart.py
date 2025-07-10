@@ -1,10 +1,12 @@
 from functools import partial
 from numbers import Number
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
-from .exceptions import OutOfStokError, ProductNotFoundError, QuantityError
-from .models import CartItem
+from flask import Flask
+
 from ._shoppingcart import ShoppingCartBase
+from .exceptions import OutOfStokError, ProductNotFoundError, QuantityError, ProductExtraDataNotFoundError
+from .models import CartItem
 
 
 class FlaskShoppingCart(ShoppingCartBase):
@@ -33,7 +35,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		"""
 		if (
 			(current_stock is not None)
-			and ((current_quantity + quantity_to_add) > current_stock)
+			and ((current_quantity + quantity_to_add) > current_stock)  # type: ignore
 		):
 			raise OutOfStokError()
 
@@ -48,11 +50,12 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 	def add(self,
          product_id: str,
-         quantity: Number = 1,
+         quantity: Number = 1,  # type: ignore
          overwrite_quantity: bool = False,
          current_stock: Optional[Number] = None,
          extra: Optional[dict] = None,
-         allow_negative: Optional[bool] = None
+         allow_negative: Optional[bool] = None,
+		 overwrite_extra: bool = False
          ) -> None:
 		"""
 		Add a product to the cart or update the quantity of an existing product.
@@ -72,7 +75,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
 
-		if not _allow_negative and quantity <= 0:
+		if not _allow_negative and quantity <= 0:  # type: ignore
 			raise ValueError("Quantity must be greater than 0.")
 
 		product: Optional[CartItem] = cart.get(product_id, None)
@@ -81,9 +84,9 @@ class FlaskShoppingCart(ShoppingCartBase):
 			"quantity": quantity,
 		}
 
-		_validate_stock: partial = partial(
-			self._validate_stock, current_stock, quantity)
+		_validate_stock: partial = partial(self._validate_stock, current_stock, quantity)
 
+		# Product data
 		if product:
 			_validate_stock(product["quantity"])
 
@@ -91,38 +94,42 @@ class FlaskShoppingCart(ShoppingCartBase):
 				product.update(_data)
 
 			else:
-				product["quantity"] += quantity
+				product["quantity"] += quantity  # type: ignore
 
 		else:
 			product = _data
 			_validate_stock(0)
 
+		# Extra data
 		if extra:
-			if not isinstance(extra, dict):
-				raise TypeError("Extra data must be a dictionary.")
-			
-			if product.get("extra"):
-				product["extra"].update(extra)
-			
-			else:
-				product["extra"] = extra
+			manage_extra_data = ManageCartItemExtraData(product)
+			product = manage_extra_data.add(extra, overwrite=overwrite_extra)
 
 		cart[product_id] = product
 
 		self._set_cart(cart)
 
-	def remove(self, product_id: str) -> None:
+	def remove(self, product_id: str, silent: bool = True) -> None:
 		"""
 		Removes a product from the cart.
 		
 		Args:
 			product_id (str): The ID of the product to remove.
+			silent (bool): If True, no error will be raised if the product is not found in the cart.
+
+		Raises:
+			ProductNotFoundError: If the product with the given ID is not found in the cart and silent is False.
 		"""
 		cart = self._get_cart()
 
-		if product_id in cart:
-			cart.pop(product_id)
-			self._set_cart(cart)
+		if (
+			not product_id in cart
+			and not silent
+		):
+			raise ProductNotFoundError("Product not found in the cart.")
+
+		cart.pop(product_id, None)
+		self._set_cart(cart)
 
 	def clear(self) -> None:
 		"""
@@ -130,7 +137,12 @@ class FlaskShoppingCart(ShoppingCartBase):
 		"""
 		self._set_cart(dict())
 
-	def subtract(self, product_id: str, quantity: Number = 1, allow_negative: bool = False, autoremove_if_0: bool = True) -> None:
+	def subtract(self, 
+			  product_id: str, 
+			  quantity: Number = 1,  # type: ignore
+			  allow_negative: bool = False, 
+			  autoremove_if_0: bool = True
+			) -> None:
 		"""
 		Substracts a quantity from a product in the cart.
 		
@@ -149,7 +161,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 		else:
 			product = cart[product_id]			
-			product["quantity"] -= quantity
+			product["quantity"] -= quantity  # type: ignore
 
 
 			if (
@@ -207,3 +219,47 @@ class FlaskShoppingCart(ShoppingCartBase):
 			dict: The product data.
 		"""
 		return self._get_cart().get(product_id, None)
+
+
+class ManageCartItemExtraData:
+	def __init__(self, product: CartItem):
+		self.product = product
+
+	def add(self, data: dict, overwrite: bool = False) -> CartItem:		
+		if not isinstance(data, dict):
+			raise TypeError("Data must be a dictionary.")
+		
+		if overwrite or not self.product.get("extra"):
+			self.product["extra"] = data
+
+		else:
+			self.product["extra"].update(data)  # type: ignore
+
+		return self.product
+
+	def remove(self, key: str, silent: bool = True) -> CartItem:
+		if (
+			not self.product.get("extra", dict()).get(key, None)
+			and not silent
+		):
+			raise ProductExtraDataNotFoundError()
+
+		self.product["extra"].pop(key, None)  # type: ignore
+
+		return self.product
+
+	def get(self, key: Optional[Any] = None) -> Union[None, Any, dict[Any, Any]]:
+		if key is None:
+			return self.product.get("extra", None)  # type: ignore
+		
+		if (
+			not self.product.get("extra")
+			or not self.product["extra"].get(key, None)  # type: ignore
+		):
+			raise ProductExtraDataNotFoundError()
+
+		return self.product["extra"][key]  # type: ignore
+	
+	def clear(self) -> CartItem:
+		self.product.pop("extra", None)
+		return self.product
