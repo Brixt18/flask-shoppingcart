@@ -1,6 +1,8 @@
 from numbers import Number
-from typing import TypedDict, NotRequired
+from typing import TypedDict
 
-class CartItem(TypedDict):
+class _CartITem(TypedDict):
+    extra: dict
+
+class CartItem(_CartITem, total=False):
     quantity: Number
-    extra: NotRequired[dict]
