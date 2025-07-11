@@ -1,6 +1,8 @@
 # Flask-Shoppingcart
 Flask-Shoppingcart is an extension to help you to build a simple shopping-cart to your e-commerce or anything that needs a shopping-cart usage in your [Flask](https://flask.palletsprojects.com/en/stable/) application.
 
+This library is designed for implementations requiring shopping-cart-like functionality. While the examples in this documentation are tailored towards a "clothing store" type implementation, please note that the usage can be adjusted to fit your system's specific needs.
+
 ## Instalation
 Install the extension with pip:
 ```shell
@@ -110,7 +112,7 @@ shopping_cart.add(
 - `current_stock` (Number, optional): The current available stock for this product. When provided, the method will validate that the total quantity in the cart (existing + new) doesn't exceed this stock limit. If the stock limit would be exceeded, an `OutOfStokError` will be raised. When `None`, no stock validation is performed.
 - `extra` (dict, optional): Additional metadata to store with the product in the cart, such as color, size, or any other custom attributes. If the product already exists in the cart and has existing extra data, the new extra data will be merged with the existing data. When `None`, no extra data is added.
 - `allow_negative` (bool, optional): When `True`, allows the quantity to be negative, which can be useful for scenarios like returns or adjustments. When `False`, negative quantities will raise a `ValueError`. If not specified, the method will use the instance's default `allow_negative_quantity` setting.
-- `overwrite_extra` (bool, optional): When `True`, replaces any existing `extra` data for the product with the new `extra` dictionary provided. When `False`, the new `extra` data will be merged with any existing data (existing keys will be updated, new keys will be added). Default is `False`. If `extra=None` and `overwrite_extra=True`, the `'extra'` key will be deleted from the product.
+- `overwrite_extra` (bool, optional): When `True`, replaces any existing `extra` data for the product with the new `extra` dictionary provided. When `False`, the new `extra` data will be merged with any existing data (existing keys will be updated, new keys will be added). Default is `False`.
 
 **Example:**
 ```python
@@ -163,6 +165,7 @@ shopping_cart.remove(product_id)
 
 **Parameters:**
 - `product_id` (str): The unique identifier of the product to completely remove from the cart. If the product doesn't exist in the cart, the method will silently do nothing (no error is raised). All data associated with this product, including quantity and extra data, will be permanently deleted from the cart.
+- `silent` (bool, optional): If False, if the product does not exists in the cart, a `ProductNotFoundError` error will be raised. When `True`, no error will be raised the if products either exists or not in the cart. Default is `True`
 
 **Example:**
 ```python
@@ -177,11 +180,6 @@ shopping_cart.clear()
 ```
 
 **Parameters:** None - This method takes no parameters and will remove all products and their associated data from the cart, effectively resetting it to an empty state.
-
-**Example:**
-```python
-shopping_cart.clear()
-```
 
 #### get_cart()
 The `get_cart()` method returns the current cart data as a dictionary.
@@ -267,6 +265,125 @@ print(shopping_cart.cart)
 # Output: {'product_1': {'quantity': 2, 'extra': {'color': 'red'}}}
 ```
 
+#### add_extra_data()
+The `add_extra_data()` method allows you to add or update extra data for a specific product in the cart.
+
+```python
+shopping_cart.add_extra_data(
+    product_id,
+    data,
+    overwrite=False
+)
+```
+
+**Parameters:**
+- `product_id` (str): The unique identifier of the product to which extra data should be added. The product must already exist in the cart, otherwise a `ProductNotFoundError` will be raised.
+- `data` (dict): A dictionary containing the extra data to add to the cart item. This can include any custom attributes like color, size, variant, or any other metadata you want to store with the product.
+- `overwrite` (bool, optional): When `True`, replaces any existing extra data with the provided data dictionary. When `False`, updates the existing extra data by merging the new data with existing data (existing keys will be updated, new keys will be added). Default is `False`.
+
+**Raises:**
+- `TypeError`: If the provided data is not a dictionary.
+- `ProductNotFoundError`: If the specified product_id is not found in the cart.
+
+**Example:**
+```python
+# Add extra data to an existing product
+shopping_cart.add_extra_data('product_1', {'color': 'blue', 'size': 'XL'})
+
+# Overwrite existing extra data
+shopping_cart.add_extra_data('product_1', {'variant': 'premium'}, overwrite=True)
+
+# Update existing extra data (merge)
+shopping_cart.add_extra_data('product_1', {'material': 'cotton'})
+```
+
+#### remove_extra_data()
+The `remove_extra_data()` method allows you to remove specific extra data keys from a product in the cart.
+
+```python
+shopping_cart.remove_extra_data(
+    product_id,
+    key,
+    silent=True
+)
+```
+
+**Parameters:**
+- `product_id` (str): The unique identifier of the product from which to remove extra data. The product must exist in the cart, otherwise a `ProductNotFoundError` will be raised.
+- `key` (str): The specific key of the extra data to remove from the product's extra data dictionary.
+- `silent` (bool, optional): When `True`, no error will be raised if the specified key is not found in the product's extra data. When `False`, a `ProductExtraDataNotFoundError` will be raised if the key doesn't exist. Default is `True`.
+
+**Raises:**
+- `ProductNotFoundError`: If the specified product_id is not found in the cart.
+- `ProductExtraDataNotFoundError`: If the specified key is not found in the product's extra data and `silent` is `False`.
+
+**Example:**
+```python
+# Remove a specific extra data key
+shopping_cart.remove_extra_data('product_1', 'color')
+
+# Remove with error handling
+shopping_cart.remove_extra_data('product_1', 'size', silent=False)
+```
+
+#### get_extra_data()
+The `get_extra_data()` method retrieves extra data from a specific product in the cart.
+
+```python
+extra_data = shopping_cart.get_extra_data(
+    product_id,
+    key=None
+)
+```
+
+**Parameters:**
+- `product_id` (str): The unique identifier of the product from which to retrieve extra data. The product must exist in the cart, otherwise a `ProductNotFoundError` will be raised.
+- `key` (str, optional): The key to look up in the product's extra data. If `None`, returns the entire extra data dictionary. Defaults to `None`.
+- - If `key` is **not** provided, and the returns is `None`, it means that the product has no extra data.
+- - If `key` is provided, it returns the value associated with that key in the product's extra data, even if its value is `None`.
+- - If `key` is provided and it does not exists or the product has no extra data, it raises a `ProductExtraDataNotFoundError`.
+
+**Returns:**
+- `Any` or `dict` or `None`: If `key` is specified, returns the value for that key. If `key` is `None`, returns the entire extra data dictionary or `None` if the product has no extra data.
+
+**Raises:**
+- `ProductNotFoundError`: If the specified product_id is not found in the cart.
+- `ProductExtraDataNotFoundError`: If the specified key is not found in the product's extra data.
+
+**Example:**
+```python
+# Get all extra data for a product
+all_extra = shopping_cart.get_extra_data('product_1')
+print(all_extra)  # {'color': 'red', 'size': 'large'}
+
+# Get a specific extra data value
+color = shopping_cart.get_extra_data('product_1', 'color')
+print(color)  # 'red'
+```
+
+#### clear_extra_data()
+The `clear_extra_data()` method removes all extra data from a specific product in the cart.
+
+```python
+shopping_cart.clear_extra_data(product_id)
+```
+
+**Parameters:**
+- `product_id` (str): The unique identifier of the product from which to clear all extra data. The product must exist in the cart, otherwise a `ProductNotFoundError` will be raised. After this operation, the product will have no extra data associated with it.
+
+**Raises:**
+- `ProductNotFoundError`: If the specified product_id is not found in the cart.
+
+**Example:**
+```python
+# Clear all extra data from a product
+shopping_cart.clear_extra_data('product_1')
+
+# The product will still exist in the cart but with no extra data
+product = shopping_cart.get_product('product_1')
+print(product)  # {'quantity': 2}  # no 'extra' key
+```
+
 ### Exceptions
 
 The extension provides custom exceptions to handle different error scenarios:
@@ -280,9 +397,17 @@ Raised when trying to access a product that doesn't exist in the cart.
 #### QuantityError
 Raised when a quantity operation would result in an invalid state, such as a negative quantity when negative quantities are not allowed.
 
+#### ProductExtraDataNotFoundError
+Raised when trying to access or remove extra data that doesn't exist for a product.
+
 **Example:**
 ```python
-from flask_shoppingcart import OutOfStokError, ProductNotFoundError, QuantityError
+from flask_shoppingcart import (
+    OutOfStokError, 
+    ProductNotFoundError, 
+    QuantityError,
+    ProductExtraDataNotFoundError
+)
 
 try:
     shopping_cart.add('product_1', 10, current_stock=5)
@@ -297,5 +422,10 @@ except ProductNotFoundError:
 try:
     shopping_cart.subtract('product_1', 5, allow_negative=False)
 except QuantityError:
-    print("Invalid quantity")
+    print("Invalid quantity operation")
+
+try:
+    shopping_cart.remove_extra_data('product_1', 'nonexistent_key', silent=False)
+except ProductExtraDataNotFoundError:
+    print("Extra data key not found")
 ```

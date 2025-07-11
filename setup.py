@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="flask_shoppingcart",
-    version="0.2.1",
+    version="0.3.0",
     author="Brixt18",
     author_email="",
     description="Add a shopping cart to your Flask app",
@@ -32,3 +32,6 @@ setuptools.setup(
 # Development Status :: 5 - Production/Stable: The project is stable and ready for production use. It has been thoroughly tested and is considered reliable.
 # Development Status :: 6 - Mature: The project is very stable and mature. It has been in production use for a long time and is unlikely to change significantly.
 # Development Status :: 7 - Inactive: The project is no longer being actively developed. It may still be usable, but no further updates are expected.
+
+# versioning:
+# Major.Minor.Patch
