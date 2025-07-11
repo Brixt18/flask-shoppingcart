@@ -2,10 +2,9 @@ from functools import partial
 from numbers import Number
 from typing import Any, Optional, Union
 
-from flask import Flask
-
 from ._shoppingcart import ShoppingCartBase
-from .exceptions import OutOfStokError, ProductNotFoundError, QuantityError, ProductExtraDataNotFoundError
+from .exceptions import OutOfStokError, ProductNotFoundError, QuantityError
+from .manage_cart_item_extra_data import ManageCartItemExtraData
 from .models import CartItem
 
 
@@ -55,7 +54,7 @@ class FlaskShoppingCart(ShoppingCartBase):
          current_stock: Optional[Number] = None,
          extra: Optional[dict] = None,
          allow_negative: Optional[bool] = None,
-		 overwrite_extra: bool = False
+         overwrite_extra: bool = False
          ) -> None:
 		"""
 		Add a product to the cart or update the quantity of an existing product.
@@ -67,6 +66,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 			current_stock (Number, optional): The current stock of the product. If set, the stock will be validated.
 			extra (dict, optional): Extra data to store in the product.
 			allow_negative (bool, optional): If True, the quantity can be negative.
+			overwrite_extra (bool): If True, the extra data will be overwritten instead of added.
 
 		Raises:
 			OutOfStokError: If the product is out of stock. This error is raise if the ignore_stock is True and the quantity exceeds the current stock.
@@ -80,11 +80,12 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 		product: Optional[CartItem] = cart.get(product_id, None)
 
-		_data:CartItem = {
+		_data: CartItem = {
 			"quantity": quantity,
 		}
 
-		_validate_stock: partial = partial(self._validate_stock, current_stock, quantity)
+		_validate_stock: partial = partial(
+			self._validate_stock, current_stock, quantity)
 
 		# Product data
 		if product:
@@ -137,12 +138,12 @@ class FlaskShoppingCart(ShoppingCartBase):
 		"""
 		self._set_cart(dict())
 
-	def subtract(self, 
-			  product_id: str, 
-			  quantity: Number = 1,  # type: ignore
-			  allow_negative: bool = False, 
-			  autoremove_if_0: bool = True
-			) -> None:
+	def subtract(self,
+              product_id: str,
+              quantity: Number = 1,  # type: ignore
+              allow_negative: bool = False,
+              autoremove_if_0: bool = True
+              ) -> None:
 		"""
 		Substracts a quantity from a product in the cart.
 		
@@ -160,9 +161,8 @@ class FlaskShoppingCart(ShoppingCartBase):
 			raise ProductNotFoundError()
 
 		else:
-			product = cart[product_id]			
+			product = cart[product_id]
 			product["quantity"] -= quantity  # type: ignore
-
 
 			if (
 				_allow_negative
@@ -173,7 +173,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 				)
 
 			if (
-				not _allow_negative 
+				not _allow_negative
 				and product["quantity"] <= 0
 			):
 				if autoremove_if_0:
@@ -205,7 +205,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 		if product is None:
 			raise ProductNotFoundError()
-		
+
 		return product
 
 	def get_product_or_none(self, product_id: str) -> Union[CartItem, None]:
@@ -220,46 +220,96 @@ class FlaskShoppingCart(ShoppingCartBase):
 		"""
 		return self._get_cart().get(product_id, None)
 
-
-class ManageCartItemExtraData:
-	def __init__(self, product: CartItem):
-		self.product = product
-
-	def add(self, data: dict, overwrite: bool = False) -> CartItem:		
-		if not isinstance(data, dict):
-			raise TypeError("Data must be a dictionary.")
+	def add_extra_data(self, product_id: str, data: dict, overwrite: bool = False) -> None:
+		"""
+		Add extra data to the cart item.
 		
-		if overwrite or not self.product.get("extra"):
-			self.product["extra"] = data
+		Args:
+			product_id (str): The unique identifier of the product to which extra data should be added.
+			data (dict): A dictionary containing extra data to add to the cart item.
+			overwrite (bool, optional): If True, replaces any existing extra data with the provided data.
+				If False, updates the existing extra data with the provided data; if a key already exists, it will be updated with the new value. Defaults to False.
 
-		else:
-			self.product["extra"].update(data)  # type: ignore
+		Raises:
+			TypeError: If the provided data is not a dictionary.
+			ProductNotFoundError: If the specified product_id is not found in the cart.
+		"""
+		cart = self._get_cart()
 
-		return self.product
+		if product_id not in cart:
+			raise ProductNotFoundError()
 
-	def remove(self, key: str, silent: bool = True) -> CartItem:
-		if (
-			not self.product.get("extra", dict()).get(key, None)
-			and not silent
-		):
-			raise ProductExtraDataNotFoundError()
+		manage_extra = ManageCartItemExtraData(cart[product_id])
+		cart[product_id] = manage_extra.add(data, overwrite=overwrite)
 
-		self.product["extra"].pop(key, None)  # type: ignore
+		self._set_cart(cart)
 
-		return self.product
+	def remove_extra_data(self, product_id: str, key: str, silent: bool = True) -> None:
+		"""
+		Remove extra data associated with a specific product in the cart.
 
-	def get(self, key: Optional[Any] = None) -> Union[None, Any, dict[Any, Any]]:
-		if key is None:
-			return self.product.get("extra", None)  # type: ignore
-		
-		if (
-			not self.product.get("extra")
-			or not self.product["extra"].get(key, None)  # type: ignore
-		):
-			raise ProductExtraDataNotFoundError()
+		Args:
+			product_id (str): The unique identifier of the product whose extra data should be removed.
+			key (str): The key of the extra data to remove from the product.
+			silent (bool, optional): If True, suppress errors if the key does not exist. Defaults to True.
 
-		return self.product["extra"][key]  # type: ignore
-	
-	def clear(self) -> CartItem:
-		self.product.pop("extra", None)
-		return self.product
+		Raises:
+			ProductNotFoundError: If the specified product_id is not found in the cart.
+			ProductExtraDataNotFoundError: If the key does not exist in the product's extra data and silent is False.
+		"""
+		cart = self._get_cart()
+
+		if product_id not in cart:
+			raise ProductNotFoundError()
+
+		manage_extra = ManageCartItemExtraData(cart[product_id])
+		cart[product_id] = manage_extra.remove(key, silent=silent)
+
+		self._set_cart(cart)
+
+	def get_extra_data(self, product_id: str, key: Optional[str] = None) -> Union[Any, dict, None]:
+		"""
+		Retrieve extra data associated with the product.
+		- If `key` is **not** provided, and the returns is `None`, it means that the product has no extra data.
+		- If `key` is provided, it returns the value associated with that key in the product's extra data, even if it is `None`.
+		- If `key` is provided and it does not exists or the product has no extra data, it raises a `ProductExtraDataNotFoundError`.
+
+		Args:
+			key (Optional[Any], optional): The key to look up in the product's extra data. 
+				If None, returns the entire extra data dictionary. Defaults to None.
+
+		Returns:
+			Union[None, Any, dict[Any, Any]]: The value associated with the given key in the extra data,
+				or the entire extra data dictionary if key is not provided.
+
+		Raises:
+			ProductNotFoundError: If the specified product_id does not exist in the cart.
+			ProductExtraDataNotFoundError: If the specified key is not found in the product's extra data.
+		"""
+		cart = self._get_cart()
+
+		if product_id not in cart:
+			raise ProductNotFoundError()
+
+		manage_extra = ManageCartItemExtraData(cart[product_id])
+		return manage_extra.get(key)
+
+	def clear_extra_data(self, product_id: str) -> None:
+		"""
+		Removes any extra data associated with a specific product in the shopping cart.
+
+		Args:
+			product_id (str): The unique identifier of the product whose extra data should be cleared.
+
+		Raises:
+			ProductNotFoundError: If the specified product_id does not exist in the cart.
+		"""
+		cart = self._get_cart()
+
+		if product_id not in cart:
+			raise ProductNotFoundError()
+
+		manage_extra = ManageCartItemExtraData(cart[product_id])
+		cart[product_id] = manage_extra.clear()
+
+		self._set_cart(cart)
