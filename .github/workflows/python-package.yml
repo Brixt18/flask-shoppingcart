@@ -1,11 +1,8 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Python package
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop" , "master" ]
   pull_request:
     branches: [ "master" ]
 
@@ -16,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7.11", "3.8", "3.9", "3.10", "3.11", "pypy-3.x"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.x"]
 
     steps:
     - uses: actions/checkout@v4
@@ -27,8 +24,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest
+        python -m pip install pytest
         if [ -f requirements-dev ]; then pip install -r requirements-dev; fi
     - name: Test with pytest
       run: |
-        pytest --cov-fail-under=100
+        pytest --cov-fail-under=100 --cov-report=html
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report-${{ matrix.python-version }}
+        path: coverage.html
