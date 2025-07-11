@@ -7,8 +7,6 @@ from .exceptions import OutOfStokError, ProductNotFoundError, QuantityError
 from .manage_cart_item_extra_data import ManageCartItemExtraData
 from .models import CartItem
 
-
-
 class FlaskShoppingCart(ShoppingCartBase):
 	@property
 	def cart(self) -> dict[str, CartItem]:
