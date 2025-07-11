@@ -4,6 +4,7 @@ from flask import Flask
 from src.flask_shoppingcart._shoppingcart import ShoppingCartBase
 from src.flask_shoppingcart.flask_shoppingcart import FlaskShoppingCart
 
+
 @pytest.fixture
 def app():
     app = Flask(__name__)
