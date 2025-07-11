@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="flask_shoppingcart",
-    version="0.3.0",
+    version="0.3.1",
     author="Brixt18",
     author_email="",
     description="Add a shopping cart to your Flask app",

@@ -3,6 +3,10 @@ Flask-Shoppingcart is an extension to help you to build a simple shopping-cart t
 
 This library is designed for implementations requiring shopping-cart-like functionality. While the examples in this documentation are tailored towards a "clothing store" type implementation, please note that the usage can be adjusted to fit your system's specific needs.
 
+## Requirements
+- [Python](https://www.python.org/downloads/)>=3.9
+- [Flask](https://flask.palletsprojects.com/en/stable/)>=3.0
+
 ## Instalation
 Install the extension with pip:
 ```shell
