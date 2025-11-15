@@ -1,0 +1,95 @@
+{
+    "info": {
+        "name": "Flask Shopping Cart API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Add to Cart",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "http://localhost:5000/add/1?quantity=1",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "add",
+                        "1"
+                    ],
+                    "query": [
+                        {
+                            "key": "quantity",
+                            "value": "1"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Subtract from Cart",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "http://localhost:5000/subtract/1?quantity=1",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "subtract",
+                        "1"
+                    ],
+                    "query": [
+                        {
+                            "key": "quantity",
+                            "value": "1"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Remove Product",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "http://localhost:5000/remove/1",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "remove",
+                        "1"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Clear Cart",
+            "request": {
+                "method": "GET",
+                "url": "http://localhost:5000/clear"
+            }
+        },
+        {
+            "name": "View Cart",
+            "request": {
+                "method": "GET",
+                "url": "http://localhost:5000/cart"
+            }
+        },
+        {
+            "name": "View Cart Product",
+            "request": {
+                "method": "GET",
+                "url": "http://localhost:5000/cart/1"
+            }
+        }
+    ]
+}

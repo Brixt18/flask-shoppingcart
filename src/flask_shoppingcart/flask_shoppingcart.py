@@ -1,15 +1,14 @@
 from functools import partial
-from numbers import Number
 from typing import Any, Optional, Union
 
 from ._shoppingcart import ShoppingCartBase
 from .exceptions import OutOfStokError, ProductNotFoundError, QuantityError
 from .manage_cart_item_extra_data import ManageCartItemExtraData
 from .models import CartItem
+from .utils import Number
 
 
 class FlaskShoppingCart(ShoppingCartBase):
-
 	def _validate_stock(self, current_stock: Optional[Number], quantity_to_add: Number, current_quantity: Number) -> None:
 		"""
 		Validates if the stock is sufficient for the quantity to be added.
@@ -156,7 +155,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 
 			if (
 				not _allow_negative
-				and product["quantity"] <= 0
+				and product["quantity"] <= 0  # type: ignore - complex number comparison (raise if error)
 			):
 				if autoremove_if_0:
 					cart.pop(product_id)

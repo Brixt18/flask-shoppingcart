@@ -1,10 +1,9 @@
-import json
 from typing import Optional
 
-from flask import Flask, Response, request, session
+from flask import Flask, session
 
 from .config import (FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY,
-                     FLASK_SHOPPING_CART_COOKIE_NAME)
+                     FLASK_SHOPPING_CART_SESSION_NAME)
 from .models import CartItem
 
 
@@ -14,8 +13,7 @@ class ShoppingCartBase:
 			self.init_app(app)
 
 	def init_app(self, app: Flask) -> None:
-		app.after_request(self._after_request)
-		self.cookie_name: str = str(app.config.get("FLASK_SHOPPING_CART_COOKIE_NAME", FLASK_SHOPPING_CART_COOKIE_NAME))  # noqa
+		self.session_cart_name: str = str(app.config.get("FLASK_SHOPPING_CART_SESSION_NAME", FLASK_SHOPPING_CART_SESSION_NAME))  # noqa
 		self.allow_negative_quantity: bool = bool(app.config.get("FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY", FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY))  # noqa
 
 	@property
@@ -35,24 +33,7 @@ class ShoppingCartBase:
 		Returns:
 			dict: The cart data.
 		"""
-		return session.get(self.cookie_name, dict())
-
-	def _after_request(self, response: Response) -> Response:
-		self._set_cookie(response)
-		return response
-
-	def _set_cookie(self, response: Response):
-		"""
-		Set the cookie with the shopping cart data.
-		This method will serialize the shopping cart data to JSON and set it as a cookie in the response headers.
-		
-		Args:
-			response (Response): The response object to set the cookie in.
-		"""
-		if not session.get(self.cookie_name):
-			self._set_cart({})
-
-		response.set_cookie(self.cookie_name, json.dumps(self.get_cart()))
+		return session.get(self.session_cart_name, dict())
 
 	def _set_cart(self, cart: dict[str, CartItem]) -> None:
 		"""
@@ -63,4 +44,4 @@ class ShoppingCartBase:
 		Args:
 			cart (dict): The cart data to set.
 		"""
-		session[self.cookie_name] = cart
+		session[self.session_cart_name] = cart

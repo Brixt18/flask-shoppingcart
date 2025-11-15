@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 
-from src.flask_shoppingcart.flask_shoppingcart import FlaskShoppingCart
+from flask_shoppingcart import FlaskShoppingCart
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -21,7 +21,10 @@ def add_to_cart(product_id: str):
     if product is None:
         return jsonify({'error': 'Product not found'}), 404
 
-    shopping_cart.add(product_id, request.args.get('quantity', 1, type=int))
+    shopping_cart.add(
+        product_id, 
+        request.args.get('quantity', 1, type=int)
+    )
 
     return jsonify(shopping_cart.get_cart())
 
