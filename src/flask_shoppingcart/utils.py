@@ -1,4 +1,4 @@
 from decimal import Decimal
-from typing import TypeAlias, Union
+from typing import Union
 
-Number: TypeAlias = Union[int, float, int, Decimal, complex]
+Number = Union[int, float, int, Decimal, complex]
