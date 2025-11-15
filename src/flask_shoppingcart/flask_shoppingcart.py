@@ -9,15 +9,6 @@ from .models import CartItem
 
 
 class FlaskShoppingCart(ShoppingCartBase):
-	@property
-	def cart(self) -> dict[str, CartItem]:
-		"""
-		Get the cart data.
-		
-		Returns:
-			dict: The cart data.
-		"""
-		return self.get_cart()
 
 	def _validate_stock(self, current_stock: Optional[Number], quantity_to_add: Number, current_quantity: Number) -> None:
 		"""
@@ -37,15 +28,6 @@ class FlaskShoppingCart(ShoppingCartBase):
 			and ((current_quantity + quantity_to_add) > current_stock)  # type: ignore
 		):
 			raise OutOfStokError()
-
-	def get_cart(self) -> dict[str, CartItem]:
-		"""
-		Get the cart data.
-		
-		Returns:
-			dict: The cart data.
-		"""
-		return self._get_cart()
 
 	def add(self,
          product_id: str,
@@ -71,7 +53,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Raises:
 			OutOfStokError: If the product is out of stock. This error is raise if the ignore_stock is True and the quantity exceeds the current stock.
 		"""
-		cart: dict[str, CartItem] = self._get_cart()
+		cart: dict[str, CartItem] = self.get_cart()
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
 
@@ -121,7 +103,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Raises:
 			ProductNotFoundError: If the product with the given ID is not found in the cart and silent is False.
 		"""
-		cart = self._get_cart()
+		cart = self.get_cart()
 
 		if (
 			not product_id in cart
@@ -153,7 +135,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 			allow_negative (bool): If True, the quantity can be negative.
 			autoremove_if_0 (bool): If True, the product will be removed if the quantity reaches 0 or less. This flag is only valid if allow_negative is False.
 		"""
-		cart = self._get_cart()
+		cart = self.get_cart()
 
 		_allow_negative = allow_negative or self.allow_negative_quantity
 
@@ -201,7 +183,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Raises:
 			ProductNotFoundError: If the product with the given ID is not found in the cart.
 		"""
-		product = self._get_cart().get(product_id, None)
+		product = self.get_cart().get(product_id, None)
 
 		if product is None:
 			raise ProductNotFoundError()
@@ -218,7 +200,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Returns:
 			dict: The product data.
 		"""
-		return self._get_cart().get(product_id, None)
+		return self.get_cart().get(product_id, None)
 
 	def add_extra_data(self, product_id: str, data: dict, overwrite: bool = False) -> None:
 		"""
@@ -234,7 +216,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 			TypeError: If the provided data is not a dictionary.
 			ProductNotFoundError: If the specified product_id is not found in the cart.
 		"""
-		cart = self._get_cart()
+		cart = self.get_cart()
 
 		if product_id not in cart:
 			raise ProductNotFoundError()
@@ -257,7 +239,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 			ProductNotFoundError: If the specified product_id is not found in the cart.
 			ProductExtraDataNotFoundError: If the key does not exist in the product's extra data and silent is False.
 		"""
-		cart = self._get_cart()
+		cart = self.get_cart()
 
 		if product_id not in cart:
 			raise ProductNotFoundError()
@@ -286,7 +268,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 			ProductNotFoundError: If the specified product_id does not exist in the cart.
 			ProductExtraDataNotFoundError: If the specified key is not found in the product's extra data.
 		"""
-		cart = self._get_cart()
+		cart = self.get_cart()
 
 		if product_id not in cart:
 			raise ProductNotFoundError()
@@ -304,7 +286,7 @@ class FlaskShoppingCart(ShoppingCartBase):
 		Raises:
 			ProductNotFoundError: If the specified product_id does not exist in the cart.
 		"""
-		cart = self._get_cart()
+		cart = self.get_cart()
 
 		if product_id not in cart:
 			raise ProductNotFoundError()

@@ -1,13 +1,11 @@
 import json
-
-from flask import Flask, Response, session, request
-
-from .models import CartItem
-
 from typing import Optional
+
+from flask import Flask, Response, request, session
 
 from .config import (FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY,
                      FLASK_SHOPPING_CART_COOKIE_NAME)
+from .models import CartItem
 
 
 class ShoppingCartBase:
@@ -19,6 +17,25 @@ class ShoppingCartBase:
 		app.after_request(self._after_request)
 		self.cookie_name: str = str(app.config.get("FLASK_SHOPPING_CART_COOKIE_NAME", FLASK_SHOPPING_CART_COOKIE_NAME))  # noqa
 		self.allow_negative_quantity: bool = bool(app.config.get("FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY", FLASK_SHOPPING_CART_ALLOW_NEGATIVE_QUANTITY))  # noqa
+
+	@property
+	def cart(self) -> dict[str, CartItem]:
+		"""
+		Get the cart data.
+		
+		Returns:
+			dict: The cart data.
+		"""
+		return self.get_cart()
+
+	def get_cart(self) -> dict[str, CartItem]:
+		"""
+		Get the cart data.
+		
+		Returns:
+			dict: The cart data.
+		"""
+		return session.get(self.cookie_name, dict())
 
 	def _after_request(self, response: Response) -> Response:
 		self._set_cookie(response)
@@ -35,25 +52,15 @@ class ShoppingCartBase:
 		if not session.get(self.cookie_name):
 			self._set_cart({})
 
-		response.set_cookie(self.cookie_name, json.dumps(self._get_cart()))
-
-	def _get_cart(self) -> dict[str, CartItem]:
-		"""
-		Get the cart data.
-		
-		Returns:
-			dict: The cart data.
-		"""
-		return session.get(self.cookie_name, dict())
+		response.set_cookie(self.cookie_name, json.dumps(self.get_cart()))
 
 	def _set_cart(self, cart: dict[str, CartItem]) -> None:
 		"""
 		Set the cart data.
+		Using the session to store the cart data, to persist across multiple uses between an instance, 
+		such as add, remove or modify extra data before saving the cookie.
 		
 		Args:
 			cart (dict): The cart data to set.
 		"""
 		session[self.cookie_name] = cart
-
-	def _get_cookie_cart(self) -> str:
-		return request.cookies.get(self.cookie_name, str(dict()))

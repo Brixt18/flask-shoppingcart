@@ -11,9 +11,3 @@ class TestShoppingCartBaseTestCase():
 			print(response.headers.get('Set-Cookie', {}))
 
 			assert 'test_cart' in response.headers.get('Set-Cookie', {})
-
-	def test_get_cookie_cart(self, cart_base: ShoppingCartBase, app: Flask):
-		with app.test_request_context():
-			cookie_cart = cart_base._get_cookie_cart()
-
-			assert cookie_cart == str(dict())
